@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+
+if __name__ == "__main__":
+  from WxStationPlots.StationPlotsGUI import StationPlotsGUI;
+  inst = StationPlotsGUI()
+  inst.mainloop()

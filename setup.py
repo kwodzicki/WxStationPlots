@@ -11,7 +11,7 @@ setuptools.setup(
   author_email     = "krwodzicki@gmail.com",
   version          = "0.0.1",
   packages         = setuptools.find_packages(),
-  install_requires = [ "python-awips", "cartopy", "numpy", "matplotlib" ],
+  install_requires = [ "python-awips", "cartopy", "matplotlib", "numpy", "scipy", "metpy", "psutil" ],
   scripts          = None,
   zip_safe = False
 );
