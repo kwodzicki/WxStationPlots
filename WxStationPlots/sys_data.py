@@ -20,40 +20,23 @@ domains = {
 
     
 varNames = [
-  'stationName',    'timeObs',          'longitude',       'latitude', 
+  'stationName',    'timeObs',   
   'temperature',    'dewpoint',         'windDir',         'windSpeed',
   'seaLevelPress',  'pressChange3Hour', 'pressChangeChar',
   'skyCoverType',   'skyLayerBase',     'skyCover',
   'visibility',     'presWeather'];                                      # List of default products to download
 
-# varUnits = {
-#   'stationName'      : None,
-#   'timeObs'          : None,
-#   'longitude'        : None,
-#   'latitude'         : None
-#   'temperature'      : units.degC,
-#   'dewpoint'         : units.degC,
-#   'windDir'          : units.degree,
-#   'windSpeed'        : units('knots'),
-#   'seaLevelPress'    : units('mbar'),
-#   'pressChange3Hour' : units('mbar'),
-#   'pressChangeChar'  : None,
-#   'skyCoverType'     : None,
-#   'skyLayerBase'     : None,
-#   'skyCover'         : None,
-#   'visibility'       : None,
-#   'presWeather'      : None};                                      # List of default products to download
 varUnits = {
   'stationName'      : None,
   'timeObs'          : None,
-  'longitude'        : None,
-  'latitude'         : None,
+#   'longitude'        : None,
+#   'latitude'         : None,
   'temperature'      : units.degC,
   'dewpoint'         : units.degC,
   'windDir'          : units.degree,
   'windSpeed'        : units('knots'),
-  'seaLevelPress'    : units('mbar'),
-  'pressChange3Hour' : units('mbar'),
+  'seaLevelPress'    : units('Pa'),
+  'pressChange3Hour' : units('Pa'),
   'pressChangeChar'  : None,
   'visibility'       : units.us_statute_mile};   
 multi_value_vars = ["presWeather", "skyCover", "skyLayerBase"]
@@ -63,8 +46,8 @@ colors = ['Black', 'DarkRed', 'Red', 'DarkOrange', 'Gold',
 sfcLookupTable = {
   'Station Name'     : {'variable' : 'stationName',      'units' : None,                  'symbol' : None,          'fmt' : ''},
   'Observation Time' : {'variable' : 'timeObs',          'units' : None,                  'symbol' : None,          'fmt' : ''},
-  'Longitude'        : {'variable' : 'longitude',        'units' : units.degrees_east,    'symbol' : None,          'fmt' : ''},
-  'Latitude'         : {'variable' : 'latitude',         'units' : units.degrees_north,   'symbol' : None,          'fmt' : ''},
+#   'Longitude'        : {'variable' : 'longitude',        'units' : units.degrees_east,    'symbol' : None,          'fmt' : ''},
+#   'Latitude'         : {'variable' : 'latitude',         'units' : units.degrees_north,   'symbol' : None,          'fmt' : ''},
   'Temperature'      : {'variable' : 'temperature',      'units' : units.degF,            'symbol' : None,          'fmt' : '.0f'},
   'Dew Point'        : {'variable' : 'dewpoint',         'units' : units.degF,            'symbol' : None,          'fmt' : '.0f'},
   'Wind Direction'   : {'variable' : 'windDir',          'units' : units.degree,          'symbol' : None,          'fmt' : ''},
