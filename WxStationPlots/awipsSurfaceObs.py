@@ -108,7 +108,7 @@ class awipsSurfaceObs( object ):
         dt        = dt)
         
 #     out = dict({var: [] for var in obs[ self.stids[0] ]});                    # Generate output dictionary that will hold all data
-    out = dict({var: [] for var in self.vars});                                 # Generate output dictionary that will hold all data
+    out = dict( {var: [] for var in self.vars} );                               # Generate output dictionary that will hold all data
     out['longitude'] = []
     out['latitude']  = []
     for stid in obs:                                                            # Iterate over all stations in the observations
@@ -118,22 +118,28 @@ class awipsSurfaceObs( object ):
           val = obs[stid][var][0];                                              # Set val to the newest variable value
         else:
           val = obs[stid][var];                                                 # Set val to the newest variable value
-        if val is None:
-          val = ''
-        else:
-          if var == 'pressChangeChar':                                          # If the variable name is pressChangeChar
-            val = int(val) if val.isdigit() else -1;                            # Convert all the string intergers to integers and replace any empty strings with -1
-          elif var == 'presWeather':                                            # Else, if variable is presWeather
-            val = utils.get_presWeather( val )
-          elif var == 'skyCover':
-            val = utils.get_cloud_cover( val )
+#         if val is None:
+#           val = ''
+#         else:
+        if var == 'pressChangeChar':                                          # If the variable name is pressChangeChar
+          val = int(val) if val.isdigit() else -1;                            # Convert all the string intergers to integers and replace any empty strings with -1
+        elif var == 'presWeather':                                            # Else, if variable is presWeather
+          val = utils.get_presWeather( val )
+        elif var == 'skyCover':
+          val = utils.get_cloud_cover( val )
         out[var].append( val );
     for var in out: 
-      out[var] = np.array( out[var] );
-      if var in sys_data.varUnits:
-        out[var][ out[var] == -9999.0 ] = 'nan'
+      if var  in sys_data.varUnits:
+        out[var] = np.array( out[var] );
+        if out[var].dtype.type is np.float64:
+          out[var][ out[var] == -9999.0 ] = 'nan'
+#         elif var == 'pressChangeChar':
+#           out[var] 
         if sys_data.varUnits[var] is not None:
           out[var] = out[var] * sys_data.varUnits[var];
+    out['longitude'] = np.array( out['longitude'] )
+    out['latitude']  = np.array( out['latitude' ] )
+
     if 'windDir' in out and 'windSpeed' in out:
       u, v = wind_components(out['windSpeed'], out['windDir'])
       out['windU'] = u;

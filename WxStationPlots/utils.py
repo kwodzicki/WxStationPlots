@@ -16,6 +16,7 @@ from metpy.plots import wx_code_map;
 
 
 def get_presWeather( code ):
+  if code is None: code = '';
   if type(code) is list:
     key = code[0]
     if len(key) == 0: key = '';
