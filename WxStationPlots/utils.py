@@ -1,3 +1,4 @@
+from metpy.plots import wx_code_map;
 
 #Some code for utc offset 
 # import datetime, import pytz
@@ -12,6 +13,20 @@
 # dt = datetime.datetime.now()
 # timezone.utcoffset(dt)
 # 
+
+
+def get_presWeather( code ):
+  if type(code) is list:
+    key = code[0]
+    if len(key) == 0: key = '';
+  elif ' ' in code:
+    key = code.split()[0]
+  elif type(code) is str:
+    key = val;          
+  try:
+    return wx_code_map[ key ];
+  except:
+    return wx_code_map[ '' ];
 
 
 ################################################################################

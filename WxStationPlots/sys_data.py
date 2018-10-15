@@ -22,9 +22,10 @@ domains = {
 varNames = [
   'stationName',    'timeObs',   
   'temperature',    'dewpoint',         'windDir',         'windSpeed',
-  'seaLevelPress',  'pressChange3Hour', 'pressChangeChar',
-  'skyCoverType',   'skyLayerBase',     'skyCover',
-  'visibility',     'presWeather'];                                      # List of default products to download
+#   'seaLevelPress',  'pressChange3Hour', 'pressChangeChar',
+#   'skyCoverType',   'skyLayerBase',     'skyCover',
+#   'visibility',     'presWeather'
+];                                                                              # List of default products to download
 
 varUnits = {
   'stationName'      : None,

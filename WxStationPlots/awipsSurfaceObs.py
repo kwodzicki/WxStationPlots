@@ -1,7 +1,6 @@
 from awips.dataaccess import DataAccessLayer as DAL;
 from dynamicserialize.dstypes.com.raytheon.uf.common.time import TimeRange;
 from metpy.calc import reduce_point_density, wind_components;
-from metpy.plots import wx_code_map;
 
 from datetime import datetime, timedelta;
 import numpy as np
@@ -89,87 +88,59 @@ class awipsSurfaceObs( object ):
     stids  = np.asarray(stids)[ filter ];
     return list( stids ); 
   ##############################################################################
-  def getData(self, stations = None, variables = sys_data.varNames, density = None):
-    self.setStations( stations );
-#     if density is not None:
-#       stids = self.reduceDensity( density );
-#       stids = self.setStations( stids );
-    self.setVariables( variables );
-    timerange = self.setTime();
-
-    obs = dict( {var: [] for var in self.vars} )
-    res = DAL.getGeometryData( self.request, timerange );
-    
-    station_names  = [];
-    pres_weather   = [];
-    sky_cov        = [];
-    sky_layer_base = [];
-    for ob in res:                                                              # Iterate over all objects in the response
-      avail_params = ob.getParameters();                                        # Get the parameters in the response
-      if "presWeather" in avail_params:                                         # If presWeather is in the avail_parameters
-        pres_weather.append( ob.getString("presWeather") );                     # Append the present weather value to the pres_weather list
-      elif "skyCover" in avail_params and "skyLayerBase" in avail_params:       # Else if skyCover and skyLayerBase are in the available parameters
-        sky_cov.append( ob.getString("skyCover") );                             # Append the skyCover the sky_cov list
-        sky_layer_base.append( ob.getNumber("skyLayerBase") );                  # Append the skyLayerBase ot the sky_layer_base list
-      else:                                                                     # Else
-        if ob.getString('stationName') not in station_names:                    # If the name of the station is NOT in the station_name list
-          station_names.append( ob.getString('stationName') );                  # Append the station name to the station_names list
-          for var in vars:                                                      # Iterate over all the products
-            if var not in avail_params:                                        # If product is not in list of available products
-              obs[var].append( None );                                         # Append None to the list under the product key in the obs dictionary
-            elif var not in sys_data.multi_value_vars:                             # If product NOT in multi_value_vars list
-              if var == 'timeObs':                                             # If the product is timeObs
-                date = datetime.fromtimestamp( ob.getNumber(var)/1000.0 );     # Get the time and convert to datetime object
-                obs[var].append( date );                                       # Append the date to the list under the prod key in the obs dictionary
-              else:                                                             # Else
-                try:                                                            # Try to 
-                  obs[var].append( ob.getNumber(var) );                       # Get number for the given product and append the to list under the prod key the obs dictionary
-                except TypeError:                                               # On exception
-                  obs[var].append( ob.getString(var) );                       # Get string for the given product and append the to list under the prod key the obs dictionary
-
-          obs['presWeather'].append(pres_weather);
-          obs['skyCover'].append(sky_cov);
-          obs['skyLayerBase'].append(sky_layer_base);
-          pres_weather   = [];
-          sky_cov        = [];
-          sky_layer_base = [];
+  def getData(self,
+        stations  = None, 
+        variables = sys_data.varNames, 
+        density   = None, 
+        reverse   = True,
+        dt        = 1):
+    '''
+    Name:
+       getData
+    Purpose:
+       To download station data and convert to format useable by metpy
+    '''
+    obs = self.getRawData( 
+        stations  = stations, 
+        variables = variables, 
+        density   = density, 
+        reverse   = reverse,
+        dt        = dt)
         
-    for tag in obs:
-      if tag in sys_data.varUnits:
-        obs[tag] = np.array( obs[tag] );
-#         if tag == 'windDir': 
-#           obs[tag][ obs[tag] == -9999.0 ] = 'nan';
-        if obs[tag].dtype.type is np.float64:
-          obs[tag][ obs[tag] == -9999.0 ] = 'nan';
-        elif tag == 'pressChangeChar':
-          obs[tag] = [ int(i) if i.isdigit() else -1 for i in obs[tag] ];       # Convert all the string intergers to integers and replace any empty strings with -1
-        if sys_data.varUnits[tag] is not None:
-          obs[tag] = obs[tag] * sys_data.varUnits[tag];
-    if 'presWeather' in obs:
-      weather = []
-      for wx in obs['presWeather']:
-        key = '';
-        if wx is not None:
-          if type(wx) is list:
-            key = wx[0]
-          elif ' ' in wx:
-            key = wx.split()[0]
-          elif type(wx) is str:
-            key = wx;          
-        try:
-          weather.append( wx_code_map[ key ] );
-        except:
-          weather.append( wx_code_map[ '' ] );
-      obs['presWeather'] = weather
-#         print( type(wx), wx)
-#       weather = [ '' if s is None else s.split()[0] for s in obs['presWeather'] ]
-    if 'skyCover' in obs:
-      obs['skyCover'] = [get_cloud_cover(x) for x in obs['skyCover']]
-    if 'windDir' in obs and 'windSpeed' in obs:
-      u, v = wind_components(obs['windSpeed'], obs['windDir'])
-      obs['windU'] = u;
-      obs['windV'] = v;
-    return obs
+#     out = dict({var: [] for var in obs[ self.stids[0] ]});                    # Generate output dictionary that will hold all data
+    out = dict({var: [] for var in self.vars});                                 # Generate output dictionary that will hold all data
+    out['longitude'] = []
+    out['latitude']  = []
+    for stid in obs:                                                            # Iterate over all stations in the observations
+      for var in obs[stid]:                                                     # Iterate over all the variables in the observations
+        if var not in out: continue;
+        if type( obs[stid][var] ) is list:
+          val = obs[stid][var][0];                                              # Set val to the newest variable value
+        else:
+          val = obs[stid][var];                                                 # Set val to the newest variable value
+        if val is None:
+          val = ''
+        else:
+          if var == 'pressChangeChar':                                          # If the variable name is pressChangeChar
+            val = int(val) if val.isdigit() else -1;                            # Convert all the string intergers to integers and replace any empty strings with -1
+          elif var == 'presWeather':                                            # Else, if variable is presWeather
+            val = utils.get_presWeather( val )
+          elif var == 'skyCover':
+            val = utils.get_cloud_cover( val )
+        out[var].append( val );
+    for var in out: 
+      out[var] = np.array( out[var] );
+      if var in sys_data.varUnits:
+        out[var][ out[var] == -9999.0 ] = 'nan'
+        if sys_data.varUnits[var] is not None:
+          out[var] = out[var] * sys_data.varUnits[var];
+    if 'windDir' in out and 'windSpeed' in out:
+      u, v = wind_components(out['windSpeed'], out['windDir'])
+      out['windU'] = u;
+      out['windV'] = v;
+    for key in out:
+      print( key, '  :  ', out[key] )
+    return out
   ##############################################################################
   def getRawData(self, 
         stations  = None, 
