@@ -8,8 +8,8 @@ varOpts  = [''] + list( sfcLookupTable.keys() );
 class stationLayoutDialog( StationPlotLayout ):
   def __init__(self, parent):
     StationPlotLayout.__init__(self);
-    self.add_barb('windU', 'windV', units='knots', linewidth=0.5);
     self.parent = parent
+    self.add_barb('windU', 'windV', units='knots', linewidth=0.5);
 #     tk.Toplevel( parent );
 #     tk.Frame.__init__(self, self.root);
     

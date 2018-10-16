@@ -23,7 +23,7 @@ def get_presWeather( code ):
   elif ' ' in code:
     key = code.split()[0]
   elif type(code) is str:
-    key = val;          
+    key = code;          
   try:
     return wx_code_map[ key ];
   except:

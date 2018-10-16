@@ -21,7 +21,7 @@ class StationPlotsGUI( tk.Tk ):
     self.optFrame.cur_domain.trace('w', self.updateDomain)
 
     update = tk.Button(self, text = 'Update Stations')
-    update.configure( command = lambda : Thread( target = self.updateObs ).start() )
+    update.configure( command = self.updateObs )
     
 
 
@@ -34,8 +34,13 @@ class StationPlotsGUI( tk.Tk ):
   def initMenuBar( self ):
     menu = tk.Menu( self );                                                     # Generate a menubar
     menu.add_command(label = 'Station Layout', command = self.stationLayout);   # Add a station layout option to the menu bar and set command to run on click
+    menu.add_command(label = 'Save Image',     command = self.saveImage);
     self.configure( menu = menu );                                              # Add the menubar to root
 
+  ##############################################################################
+  def saveImage(self, *args):
+    file = 'test.eps'
+    self.plotFrame.figure.savefig( file );
   ##############################################################################
   def stationLayout(self, *args):
     self.plotFrame.stationLayout.show()
@@ -43,11 +48,14 @@ class StationPlotsGUI( tk.Tk ):
   ##############################################################################
   def updateObs(self, *args):
     self.optFrame.startLoad()
-    try:
-      obs = self.srfObs.getData(density = 4)
-      self.plotFrame.plotStations( obs );
-    except Exception as err:
-      print( err );
+    obs = self.srfObs.getData(density = 2)
+#     print( obs )
+    self.plotFrame.plotStations( obs );
+
+#     try:
+#       self.plotFrame.plotStations( obs );
+#     except Exception as err:
+#       print( err );
     self.optFrame.stopLoad();
   ##############################################################################
   def updateDomain(self, *args):

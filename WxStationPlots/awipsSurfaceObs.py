@@ -88,6 +88,92 @@ class awipsSurfaceObs( object ):
     stids  = np.asarray(stids)[ filter ];
     return list( stids ); 
   ##############################################################################
+  def __getData_Old(self,
+        stations  = None, 
+        variables = sys_data.varNames, 
+        density   = None, 
+        reverse   = True,
+        dt        = 1):
+    variables = variables + ['longitude', 'latitude']
+
+    self.setStations( stations, density = density );
+#     if density is not None:
+#       stids = self.reduceDensity( density );
+#       stids = self.setStations( stids );
+    self.setVariables( variables );
+    timerange = self.setTime( dt );
+
+#     vars = self.vars + ['longitude', 'latitude']
+    obs  = dict( {var: [] for var in self.vars} )
+    res  = DAL.getGeometryData( self.request, timerange );
+    
+    station_names  = [];
+    pres_weather   = [];
+    sky_cov        = [];
+    sky_layer_base = [];
+    for ob in res:                                                              # Iterate over all objects in the response
+      avail_params = ob.getParameters();                                        # Get the parameters in the response
+      if "presWeather" in avail_params:                                         # If presWeather is in the avail_parameters
+        pres_weather.append( ob.getString("presWeather") );                     # Append the present weather value to the pres_weather list
+      elif "skyCover" in avail_params and "skyLayerBase" in avail_params:       # Else if skyCover and skyLayerBase are in the available parameters
+        sky_cov.append( ob.getString("skyCover") );                             # Append the skyCover the sky_cov list
+        sky_layer_base.append( ob.getNumber("skyLayerBase") );                  # Append the skyLayerBase ot the sky_layer_base list
+      else:                                                                     # Else
+        if ob.getString('stationName') not in station_names:                    # If the name of the station is NOT in the station_name list
+          station_names.append( ob.getString('stationName') );                  # Append the station name to the station_names list
+          for var in self.vars:                                                      # Iterate over all the products
+            if var not in avail_params:                                        # If product is not in list of available products
+              obs[var].append( None );                                         # Append None to the list under the product key in the obs dictionary
+            elif var not in sys_data.multi_value_vars:                             # If product NOT in multi_value_vars list
+              if var == 'timeObs':                                             # If the product is timeObs
+                date = datetime.fromtimestamp( ob.getNumber(var)/1000.0 );     # Get the time and convert to datetime object
+                obs[var].append( date );                                       # Append the date to the list under the prod key in the obs dictionary
+              else:                                                             # Else
+                try:                                                            # Try to 
+                  obs[var].append( ob.getNumber(var) );                       # Get number for the given product and append the to list under the prod key the obs dictionary
+                except TypeError:                                               # On exception
+                  obs[var].append( ob.getString(var) );                       # Get string for the given product and append the to list under the prod key the obs dictionary
+          if 'presWeather' in obs:
+            obs['presWeather'].append(pres_weather);
+          if 'skyCover' in obs:
+            obs['skyCover'].append(sky_cov);
+          if 'skyLayerBase' in obs:
+            obs['skyLayerBase'].append(sky_layer_base);
+          pres_weather   = [];
+          sky_cov        = [];
+          sky_layer_base = [];
+        
+    for tag in obs:
+#       if tag in sys_data.varUnits:
+      obs[tag] = np.array( obs[tag] );
+      if tag == 'windDir': 
+        obs[tag][ obs[tag] == -9999.0 ] = 'nan';
+#       if obs[tag].dtype.type is np.float64:
+#         obs[tag][ obs[tag] == -9999.0 ] = 'nan';
+      elif tag == 'pressChangeChar':
+        obs[tag] = [ int(i) if i.isdigit() else -1 for i in obs[tag] ];       # Convert all the string intergers to integers and replace any empty strings with -1
+      if tag in sys_data.varUnits:
+        if sys_data.varUnits[tag] is not None:
+          obs[tag] = obs[tag] * sys_data.varUnits[tag];
+    if 'presWeather' in obs:
+      weather = []
+      for wx in obs['presWeather']:
+        weather.append( utils.get_presWeather( wx ) )
+      obs['presWeather'] = weather
+#         print( type(wx), wx)
+#       weather = [ '' if s is None else s.split()[0] for s in obs['presWeather'] ]
+    if 'skyCover' in obs:
+      obs['skyCover'] = [utils.get_cloud_cover(x) for x in obs['skyCover']]
+    if 'windDir' in obs and 'windSpeed' in obs:
+      u, v = wind_components(obs['windSpeed'], obs['windDir'])
+      obs['windU'] = u;
+      obs['windV'] = v;
+#     obs['longitude'] = np.array( obs['longitude'] )
+#     obs['latitude']  = np.array( obs['latitude' ] )
+    for key in obs: print( key, type( obs[key] ) )
+    return obs
+    
+  ##############################################################################
   def getData(self,
         stations  = None, 
         variables = sys_data.varNames, 
@@ -144,8 +230,6 @@ class awipsSurfaceObs( object ):
       u, v = wind_components(out['windSpeed'], out['windDir'])
       out['windU'] = u;
       out['windV'] = v;
-    for key in out:
-      print( key, '  :  ', out[key] )
     return out
   ##############################################################################
   def getRawData(self, 

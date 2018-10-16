@@ -59,7 +59,7 @@ class matplotFrame( tk.Frame ):
 #     self.axes.set_extent( domains[domain]['limits'], crs = self.PlateCarree )
 
     self.proj   = ccrs.LambertConformal( standard_parallels=[35] )
-    self.axes   = self.figure.add_subplot(1, 1, 1, projection = self.proj)
+    self.axes   = self.figure.add_subplot(1, 1, 1, projection = self.proj, clip_on = True)
     plt.subplots_adjust(left = 0.05, bottom = 0.05, right = 0.95, top = 0.95);
     self.axes.coastlines( resolution ='50m', linewidth = 0.5 );
     self.axes.add_feature( cfeature.BORDERS.with_scale( '50m' ), linewidth = 0.5 );
@@ -82,9 +82,10 @@ class matplotFrame( tk.Frame ):
     if varName is False: return;                                                # If returns False, that means the item has not been fully removed yet so just return
     print( 'Updating station layout' );
     key = tuple( [i * 10 for i in key] );                                       # Update the key based on the size of the symbols
-    if key in self.stnPlots.items:                                              # If the key is in the stnPlots.items attributes
-      print( 'Found key!' )
-      self.stnPlots.items.pop( key ).remove();                                  # Pop off the item from the list and remove it from the plot
+    if hasattr( self.stnPlots, 'items'):
+      if key in self.stnPlots.items:                                              # If the key is in the stnPlots.items attributes
+        print( 'Found key!' )
+        self.stnPlots.items.pop( key ).remove();                                  # Pop off the item from the list and remove it from the plot
     if varName is not True:                                                     # If varName is NOT True; then it must be as string representing a variable that must be added to the plot
       print(varName, varName in self.obs)
       
